@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PackMaster: Geometry | Luxury Geometric Packing Puzzle</title>
+  <meta name="description" content="PackMaster: Geometry (Tessellate) - A polished, tactile web-based geometric puzzle packing game. Drag, rotate, and assemble vibrant geometric shapes into a solid wooden frame.">
+  <meta name="theme-color" content="#1a1412">
+
+  <!-- Google Fonts: Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Confetti Particle Canvas -->
+  <canvas id="confettiCanvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+  <div class="app-container">
+    <!-- Top Modern Glassmorphism HUD -->
+    <header class="app-header" role="banner">
+      <div class="header-left">
+        <div class="brand-badge">
+          <div class="brand-logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="28" height="28">
+              <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" fill="url(#brandGrad)" stroke="#ffd700" stroke-width="1.5"/>
+              <polygon points="16,6 26,12 26,20 16,26 6,20 6,12" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+              <circle cx="16" cy="16" r="3" fill="#ffd700" />
+              <defs>
+                <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f4a261"/>
+                  <stop offset="100%" stop-color="#e76f51"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="brand-titles">
+            <h1 class="brand-title">PackMaster <span class="brand-accent">Geometry</span></h1>
+            <span class="brand-sub">Tessellate Edition</span>
+          </div>
+        </div>
+
+        <div class="level-meta-pill">
+          <span id="levelBadge" class="level-badge">Level 1 • Intro</span>
+          <span id="levelTitle" class="level-name">The Awakening</span>
+        </div>
+      </div>
+
+      <!-- Live Countdown Timer & Star Rating Targets -->
+      <div class="header-center">
+        <div class="timer-box" title="Remaining time to achieve top star rating">
+          <div class="timer-readout">
+            <span class="timer-icon" aria-hidden="true">⏱</span>
+            <span id="timerDisplay" class="timer-digits">45.0s</span>
+          </div>
+          <div class="timer-track" aria-hidden="true">
+            <div id="timerProgressBar" class="timer-fill"></div>
+            <!-- Star target indicator lines -->
+            <div class="star-marker star-3" title="3-Star Cutoff">★</div>
+            <div class="star-marker star-2" title="2-Star Cutoff">★</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HUD Controls -->
+      <div class="header-right">
+        <button id="hintBtn" class="hud-btn" aria-label="Show Hint" title="Reveal placement hint">
+          <span class="btn-icon">💡</span>
+          <span class="btn-label">Hint</span>
+        </button>
+
+        <button id="resetBtn" class="hud-btn" aria-label="Clear Frame" title="Return all pieces to tray">
+          <span class="btn-icon">↺</span>
+          <span class="btn-label">Clear</span>
+        </button>
+
+        <button id="levelSelectBtn" class="hud-btn" aria-label="Select Level" title="Browse difficulty levels">
+          <span class="btn-icon">☰</span>
+          <span class="btn-label">Levels</span>
+        </button>
+
+        <button id="soundToggleBtn" class="hud-btn icon-only" aria-label="Toggle Sound" title="Sound Effects">
+          <span class="btn-icon">🔊</span>
+        </button>
+
+        <button id="helpBtn" class="hud-btn icon-only" aria-label="Game Rules & Controls" title="How to Play">
+          <span class="btn-icon">?</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Stage -->
+    <main class="game-stage" role="main">
+      <!-- Packing Status Strip -->
+      <section class="packing-status-strip" aria-label="Packing Coverage Status">
+        <div class="status-info">
+          <span class="status-label">Packing Progress</span>
+          <span id="coverageText" class="coverage-text">0/4 placed (0% solid)</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <div id="packProgress" class="progress-bar-fill"></div>
+        </div>
+      </section>
+
+      <!-- Puzzle Frame & Recessed Wooden Tray -->
+      <div class="puzzle-workspace">
+        <!-- Floating Corner Metal Hardware Brackets for Aesthetic -->
+        <div class="frame-cradle">
+          <div class="brass-corner top-left"></div>
+          <div class="brass-corner top-right"></div>
+          <div class="brass-corner bottom-left"></div>
+          <div class="brass-corner bottom-right"></div>
+
+          <!-- Main Recessed Frame -->
+          <div id="puzzleFrame" class="puzzle-frame" role="region" aria-label="Geometric Puzzle Frame">
+            <!-- Dynamically injected SVG grid grooves and placed pieces -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Piece Active Mobile Bar -->
+      <section id="selectedPieceControls" class="selected-piece-bar" aria-label="Selected Piece Controls">
+        <span id="selectedPieceLabel" class="selected-piece-title">Piece Selected</span>
+        <div class="piece-action-buttons">
+          <button id="mobileRotateLeftBtn" class="piece-ctrl-btn" aria-label="Rotate Counter Clockwise" title="Rotate Left (Q)">
+            <span>↶</span> 90°
+          </button>
+          <button id="mobileRotateRightBtn" class="piece-ctrl-btn" aria-label="Rotate Clockwise" title="Rotate Right (R / Right-Click / Space)">
+            <span>↷</span> 90°
+          </button>
+          <button id="mobileFlipBtn" class="piece-ctrl-btn" aria-label="Flip Piece" title="Flip Horizontal (F)">
+            <span>⇄</span> Flip
+          </button>
+          <button id="mobileTrayBtn" class="piece-ctrl-btn" aria-label="Return to Tray" title="Return to Tray (Del)">
+            <span>⌫</span> Tray
+          </button>
+        </div>
+      </section>
+
+      <!-- Pieces Tray / Palette -->
+      <section class="tray-container" aria-label="Puzzle Pieces Tray">
+        <div class="tray-header">
+          <h2 class="tray-heading">Piece Storage Palette</h2>
+          <span class="tray-sub">Drag into frame • Right-Click / R to Rotate • F to Flip</span>
+        </div>
+        <div id="pieceTray" class="piece-tray" role="list" aria-label="Unplaced Pieces">
+          <!-- Dynamically populated pieces -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- VICTORY MODAL -->
+  <dialog id="victoryModal" class="game-dialog victory-dialog" aria-labelledby="victoryRank">
+    <div class="modal-card">
+      <div class="victory-header">
+        <div class="laurel-wreath" aria-hidden="true">🏆</div>
+        <h2 id="victoryRank" class="victory-title">PERFECT PACK!</h2>
+        <span class="victory-subtitle">Solid Tessellation Achieved</span>
+      </div>
+
+      <div class="victory-body">
+        <div id="victoryStars" class="stars-cluster" aria-label="Stars Earned">
+          <span class="star-icon earned">★</span>
+          <span class="star-icon earned">★</span>
+          <span class="star-icon earned">★</span>
+        </div>
+
+        <div class="score-summary-grid">
+          <div class="summary-metric">
+            <span class="metric-label">Time Taken</span>
+            <span id="victoryTime" class="metric-value">4.2s</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-label">3-Star Target</span>
+            <span id="victoryTarget" class="metric-value">&lt; 12.0s</span>
+          </div>
+        </div>
+
+        <div id="newRecordTag" class="new-record-pill" style="display:none;">
+          🌟 NEW PERSONAL BEST!
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="replayVictoryBtn" class="dialog-btn secondary">
+          ↺ Play Again
+        </button>
+        <button id="levelSelectVictoryBtn" class="dialog-btn secondary">
+          ☰ Levels
+        </button>
+        <button id="nextLevelBtn" class="dialog-btn primary">
+          Next Level →
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- TIMEOUT MODAL -->
+  <dialog id="timeoutModal" class="game-dialog timeout-dialog" aria-labelledby="timeoutTitle">
+    <div class="modal-card">
+      <div class="timeout-header">
+        <div class="timeout-icon" aria-hidden="true">⏳</div>
+        <h2 id="timeoutTitle" class="timeout-title">Time Expired!</h2>
+        <p class="timeout-sub">The clock ran out, but mastery requires persistence.</p>
+      </div>
+      <div class="modal-actions">
+        <button id="keepSolvingBtn" class="dialog-btn secondary">
+          🧘 Keep Solving (Zen Mode)
+        </button>
+        <button id="retryTimeoutBtn" class="dialog-btn primary">
+          ↺ Retry Level
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- LEVEL SELECT MODAL -->
+  <dialog id="levelModal" class="game-dialog level-dialog" aria-labelledby="levelSelectHeading">
+    <div class="modal-card wide">
+      <div class="dialog-header-bar">
+        <h2 id="levelSelectHeading" class="dialog-title">Select Difficulty Level</h2>
+        <button class="close-modal-btn" aria-label="Close modal">✕</button>
+      </div>
+      <div id="levelListContainer" class="level-selection-grid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- HOW TO PLAY / RULES MODAL -->
+  <dialog id="helpModal" class="game-dialog help-dialog" aria-labelledby="helpHeading">
+    <div class="modal-card">
+      <div class="dialog-header-bar">
+        <h2 id="helpHeading" class="dialog-title">Rules & Controls</h2>
+        <button class="close-modal-btn" aria-label="Close modal">✕</button>
+      </div>
+      <div class="help-content">
+        <div class="rule-section">
+          <h3>🎯 The Objective</h3>
+          <p>Fit all provided geometric pieces into the wooden frame so they form a <strong>100% solid pattern</strong> without any overlaps and with no piece protruding past the boundary.</p>
+        </div>
+
+        <div class="rule-section">
+          <h3>🎮 Controls</h3>
+          <ul class="controls-list">
+            <li><strong>Drag & Drop:</strong> Click/touch and move pieces into the frame or back to the palette. Pieces magnetically snap to the frame grid.</li>
+            <li><strong>Rotate (90°):</strong> Right-click on any piece, click the circular ↻ badge, or press <kbd>R</kbd> / <kbd>Space</kbd>.</li>
+            <li><strong>Counter-Clockwise:</strong> Press <kbd>Q</kbd>.</li>
+            <li><strong>Flip Horizontal:</strong> Press <kbd>F</kbd> to mirror asymmetric shapes (trapezia & triangles).</li>
+            <li><strong>Return to Tray:</strong> Press <kbd>Del</kbd> or <kbd>Backspace</kbd> while a piece is selected.</li>
+          </ul>
+        </div>
+
+        <div class="rule-section">
+          <h3>⭐ Time-Based Star Ratings</h3>
+          <ul class="star-rating-list">
+            <li><span class="star-sample">★★★</span> <strong>Grandmaster:</strong> Complete the packing before the first speed cutoff.</li>
+            <li><span class="star-sample">★★☆</span> <strong>Expert:</strong> Complete before the second speed cutoff.</li>
+            <li><span class="star-sample">★☆☆</span> <strong>Completed:</strong> Pack all pieces before the countdown timer hits 0.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="dialog-btn primary close-modal-btn">Got It! Let's Pack</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modular Scripts -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
